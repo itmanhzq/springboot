@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.chp.modules.mybatis.dao.mapper.AudioClipMapper">
+	<resultMap id="BaseResultMap"
+		type="com.chp.modules.mybatis.dao.entity.AudioClip">
+		<id column="UUID" property="uuid" jdbcType="VARCHAR" />
+		<result column="COURT_UUID" property="courtUuid" jdbcType="VARCHAR" />
+		<result column="DELETE_FLAG" property="enableFlag" jdbcType="INTEGER" />
+		<result column="AUDIOCLIP_NAME" property="audioClipName"
+			jdbcType="VARCHAR" />
+		<result column="AUDIOCLIP_FORMAT" property="audioClipFormat"
+			jdbcType="VARCHAR" />
+		<result column="AUDIOCLIP_FILE_ID" property="audioClipFileId"
+			jdbcType="VARCHAR" />
+		<result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="UPDATE_TIME" property="updateTime" jdbcType="TIMESTAMP" />
+		<result column="CREATE_USER" property="createUser" jdbcType="VARCHAR" />
+		<result column="UPDATE_USER" property="updateUser" jdbcType="VARCHAR" />
+	</resultMap>
+
+
+	<select id="qryAudioClipName" resultType="java.lang.String">
+		SELECT
+		DISTINCT(audioclip_name)
+		FROM
+		bc.bc_audioclip_info where delete_flag=1
+	</select>
+
+	<select id="qryAudioClipByIds" resultMap="BaseResultMap">
+		SELECT
+		A.*
+		FROM
+		bc.bc_audioclip_info A where A.delete_flag=1 and A.uuid
+		in
+		<foreach collection="list" item="audioIds" open="(" separator=","
+			close=")">
+			#{audioIds}
+		</foreach>
+	</select>
+
+	<insert id="batchInsert" parameterType="java.util.List">
+		insert into bc.bc_audioclip_info
+		(
+		UUID,COURT_UUID,delete_flag,
+		AUDIOCLIP_NAME,AUDIOCLIP_FORMAT,
+		AUDIOCLIP_FILE_ID,
+		CREATE_TIME,CREATE_USER,UPDATE_TIME,UPDATE_USER)
+		values
+		<foreach collection="list" item="audio" index="index"
+			separator=",">
+			(
+			#{audio.uuid},
+			#{audio.courtUuid},
+			#{audio.enableFlag},
+			#{audio.audioClipName},
+			#{audio.audioClipFormat},
+			#{audio.audioClipFileId},
+			#{audio.createTime},
+			#{audio.createUser},
+			#{audio.updateTime},
+			#{audio.updateUser}
+			)
+		</foreach>
+	</insert>
+
+	<!-- 总记录数  mysql不支持like postgrepSql才支持-->
+	<select id="qryTotalByKey" parameterType="java.lang.String"
+		resultType="java.lang.Integer">
+		select count(1)
+		from
+		bc.bc_audioclip_info WHERE delete_flag=1
+		<if test="searchKey!=null">
+			and AUDIOCLIP_NAME like #{searchKey}
+		</if>
+	</select>
+
+	<!-- 按条件分页查询 -->
+	<select id="qryByMapParam" resultMap="BaseResultMap"
+		parameterType="map">
+		select
+		UUID,COURT_UUID,AUDIOCLIP_NAME,AUDIOCLIP_FORMAT,AUDIOCLIP_FILE_ID,CREATE_TIME,CREATE_USER,UPDATE_TIME,UPDATE_USER
+		from
+		bc.bc_audioclip_info WHERE delete_flag=1
+		<if test="searchKey!=null">
+			and AUDIOCLIP_NAME like #{searchKey}
+		</if>
+		order by CREATE_TIME DESC
+		limit #{pageSize,jdbcType=INTEGER} offset
+		#{start,jdbcType=INTEGER}
+	</select>
+
+	<update id="batchDeleteByKeyList" parameterType="java.util.List">
+		update bc.bc_audioclip_info set delete_flag=0 where uuid in
+		<foreach collection="list" item="keyList" open="(" separator=","
+			close=")">
+			#{keyList}
+		</foreach>
+	</update>
+
+
+	<!-- 根据音频id查看音频详情 -->
+	<select id="qryByListParam" resultMap="BaseResultMap">
+		select * from bc.bc_audioclip_info where delete_flag=1
+		and uuid in
+		<foreach collection="list" item="uuids" open="(" separator=","
+			close=")">
+			#{uuids}
+		</foreach>
+	</select>
+
+</mapper>
